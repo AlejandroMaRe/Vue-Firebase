@@ -1,10 +1,5 @@
 <template>
   <div class="home">
-    <!-- <img alt="Vue logo" src="../assets/logo.png"> -->
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
-	<!-- <span v-for="value in answers" v-bind:key="value"> -->
-		{{answers}}
-	<!-- </span> -->
 	<GChart
     type="BarChart"
     :data="chartData"
@@ -16,48 +11,60 @@
 <script>
 // @ is an alias to /src
 import { GChart } from 'vue-google-charts'
-import HelloWorld from '@/components/HelloWorld.vue';
 import { db } from '../firebase';
 
 export default {
-  name: 'Home',
-  components: {
-	HelloWorld,
-	GChart
-  },
-   data(){
+	name: 'Home',
+	components: {
+		GChart
+	},
+	data(){
         return{
-            answers: db.ref('answers'),
-			password: '',
+			email: null,
+			password: null,
+			answers: db.ref('answers'),
 			chartData: [
-        ['pregunta', 'Aciertos', {role: 'style'} , 'errores', {role: 'style'}],
-        ['2014', 1000, 'blue' , 400, 'orange'],
-        ['2015', 1170, 'blue', 460, 'orange'],
-        ['2016', 660, 'blue',1120 ,'orange'],
-        ['2017', 1030, 'blue',540 ,'orange']
-      ],
-      chartOptions: {
-        chart: {
-          title: 'Aciertos y errores por pregunta',
-          subtitle: 'Aciertos / Errores',
-		},
-		isStacked: true,
-        title: 'Aciertos y errores por pregunta',
-        subtitle: 'Aciertos / Errores',
-		
-      }
-        }
+				['pregunta', 'Aciertos', {role: 'style'} , 'Errores', {role: 'style'}]
+			],
+			chartOptions: {
+				isStacked: true,
+				title: 'Aciertos y errores por pregunta',
+				width: 'auto',
+				height: 1500,
+				hAxis: {
+					title: 'Aciertos / Errores',
+					minValue: 0
+				},
+				vAxis: {
+					title: 'Pregunta'
+				},
+				colors: ['blue', 'orange']
+			}
+		}
     },
-mounted (){
-//   console.log(this.answers, 'this answers')
-  let answer = this.answers.orderByChild('questionId').equalTo(0).on('child_added', function(snapshot){
-	console.log(snapshot.key,' sss')
-  });
-console.log(answer.size,' answer size');
-//   let answers = this.answers.orderByChild('questionId').on('child_added', function(snapshot){
-// let questionId = snapshot.val().questionId;if(questionId == 0){console.log(snapshot.val())}
-//   });
-//   console.log(answers);
-}
+	mounted (){
+		let newArray = this.chartData; // array para los valores en chartData
+		let answer = this.answers.orderByChild('questionId');
+		answer.once('value').then(function(snapshot){
+			let sumCorrect = 0;
+			let sumIncorrect = 0;
+			let questionId;
+			snapshot.forEach(function(childSnapshot){
+				let questionIdAux = questionId;
+				questionId = childSnapshot.val().questionId;
+				if(childSnapshot.val().right == true){
+					sumCorrect = sumCorrect + 1;
+				}else{
+					sumIncorrect = sumIncorrect + 1;
+				}
+				if(questionIdAux != questionId){
+					newArray.push([questionIdAux, sumCorrect, 'blue', sumIncorrect ,'orange']);
+					sumCorrect = 0;
+					sumIncorrect = 0;
+				}
+			});
+		});
+		this.chartData = newArray; //sustituyo el nuevo array con los datos de la consulta
+	}
 }
 </script>
