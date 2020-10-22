@@ -1,5 +1,6 @@
 <template>
   <div class="home">
+	<button @click="logout">Logout</button>
 	<GChart
     type="BarChart"
     :data="chartData"
@@ -12,6 +13,7 @@
 // @ is an alias to /src
 import { GChart } from 'vue-google-charts'
 import { db } from '../firebase';
+import firebase from 'firebase';
 
 export default {
 	name: 'Home',
@@ -41,7 +43,14 @@ export default {
 				colors: ['blue', 'orange']
 			}
 		}
-    },
+	},
+	methods:{
+		logout: function(){
+			firebase.auth().signOut().then(() => {
+				this.$router.replace('login');
+			});
+		}
+	},
 	mounted (){
 		let newArray = this.chartData; // array para los valores en chartData
 		let answer = this.answers.orderByChild('questionId');
